@@ -1,0 +1,3 @@
+[submodule "external/solarized"]
+	path = external/solarized
+	url = https://github.com/benhager/solarized-matlab.git
