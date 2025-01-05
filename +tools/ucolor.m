@@ -1,8 +1,12 @@
 function code = ucolor(colorname)
     arguments 
-        colorname (1,1) string {mustBeMember(colorname, ["red", "green", "blue", "yellow", "purple", "cyan", "brown", "orange", "pink"])}
+        colorname (1,1) string {mustBeMember(colorname, ["black", "gray", "red", "green", "blue", "yellow", "purple", "cyan", "brown", "orange", "pink"])}
     end
     switch colorname
+        case "black"
+            code = [0, 0, 0]/255;
+        case "gray" 
+            code = [128, 128, 128]/255;
         case "red"
             code = [255, 75, 0]/255;
         case "green"
