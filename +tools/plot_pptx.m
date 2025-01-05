@@ -15,9 +15,14 @@ classdef plot_pptx < handle
                 name = 'my_template_wide.pptx';
             end
             obj.h = actxserver('PowerPoint.Application');
-            obj.myPres=obj.h.Presentations.Open(which(name));
+            if exist(which(name), 'file')
+                obj.myPres=obj.h.Presentations.Open(which(name));
+                obj.pages = 1;
+            else
+                obj.myPres=obj.h.Presentations.Add;
+                obj.pages = 0;
+            end
             obj.blankSlide = obj.myPres.SlideMaster.CustomLayouts.Item(2);
-            obj.pages = 1;
             obj.add_page();
         end
         
