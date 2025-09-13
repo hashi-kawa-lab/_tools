@@ -1,4 +1,18 @@
-function [mat, nr, nc] = cell2mat(c, nr, nc)
+function [mat, nr, nc] = cell2mat(c, nr, nc, namedArgs)
+arguments
+    c
+    nr = [];
+    nc = [];
+    namedArgs.nr;
+    namedArgs.nc;
+end
+
+if isfield(namedArgs, "nr")
+    nr = namedArgs.nr;
+end
+if isfield(namedArgs, "nc")
+    nc = namedArgs.nc;
+end
 
 [row, col] = size(c);
 
@@ -7,22 +21,22 @@ Cmat = nan(row, col);
 
 for i = 1:col
     for j = 1:row
-        
+
         if isnumeric(c{j, i})
             [Rmat(j, i), Cmat(j, i)] = size(c{j, i});
         end
-        
+
     end
 end
 
 R = mode(Rmat, 2);
 C = mode(Cmat, 1);
 
-if nargin >= 2 && ~isempty(nr)
+if ~isempty(nr)
     R(isnan(R)) = nr(isnan(R));
 end
 
-if nargin >= 3 && ~isempty(nc)
+if ~isempty(nc)
     C(isnan(C)) = nc(isnan(C));
 end
 
@@ -44,8 +58,7 @@ end
 
 for i = 1:col
     for j = 1:row
-        
-        if ischar(c{j, i})
+        if ischar(c{j, i}) || isstring(c{j, i})
             if startsWith(c{j, i}, '-')
                 sign = -1;
                 c{j, i} = c{j, i}(2:end);
@@ -60,7 +73,7 @@ for i = 1:col
             end
             c{j, i} = c{j, i} * sign;
         end
-        
+
     end
 end
 
