@@ -7,6 +7,9 @@ classdef plot_pptx < handle
         myPres
         slide
         width = 960
+        height = 460
+        gap = 30
+        header = 45
     end
     
     methods
@@ -159,7 +162,115 @@ classdef plot_pptx < handle
             end
         end
 
+        function add_plot_position(obj, f, left, top, width, height, options, NamedArgs)
+            arguments
+                obj
+                f
+                left = []
+                top = []
+                width = []
+                height = []
+                options.type (1,:) char {mustBeMember(options.type, {'vector', 'image'})} = 'vector'
+                options.fontsize = 18;
+                options.fontname = "Times New Roman"
+                options.resolution (1,1) double {mustBePositive, mustBeInteger} = 300
+                NamedArgs.left
+                NamedArgs.top
+                NamedArgs.width
+                NamedArgs.height
+            end
+
+            figure(f), grid on, box on
+            set(f.Children, 'FontSize', options.fontsize);
+            set(f.Children, 'FontName', options.fontname);
+            if isempty(left)
+                left = NamedArgs.left;
+            end
+            if isempty(top)
+                top = NamedArgs.top;
+            end
+            if isempty(width)
+                width = NamedArgs.width;
+            end
+            if isempty(height)
+                height = NamedArgs.height;
+            end
+            tmpfile = tempname(pwd);
+            if strcmpi(options.type, 'vector')
+                tmpfile = strcat(tmpfile, '.emf');
+                exportgraphics(f, tmpfile, ContentType="vector", BackgroundColor="none", Width=width, Height=height);
+            else
+                tmpfile = strcat(tmpfile, '.png');
+                exportgraphics(f, tmpfile, ContentType="image", BackgroundColor="none", Width=width, Height=height, Units="points", Resolution=options.resolution);
+            end
+
+            obj.slide.Shapes.AddPicture(tmpfile, 'msoFalse', 'msoCTrue', left, top, width, height);
+            delete(tmpfile);
+
+        end
+
+        function add_plot_tile(obj, f, row, col, row_all, col_all, options, common_options)
+            arguments
+                obj
+                f
+                row (1,1) {mustBePositive, mustBeInteger}
+                col (1,1) {mustBePositive, mustBeInteger}
+                row_all (1,1) {mustBePositive, mustBeInteger}
+                col_all (1,1) {mustBePositive, mustBeInteger}
+                options.gap = obj.gap
+                options.header = obj.header
+                options.slidewidth = obj.width
+                options.slideheight = obj.height
+                common_options.type (1,:) char {mustBeMember(common_options.type, {'vector', 'image'})} = 'vector'
+                common_options.fontsize = 18;
+                common_options.fontname = "Times New Roman"
+                common_options.resolution (1,1) double {mustBePositive, mustBeInteger} = 300
+            end
+
+            width = (options.slidewidth - options.gap * (col_all + 1)) / col_all;
+            height = (options.slideheight - options.gap * (row_all + 1)) / row_all;
+            left = options.gap * col + width * (col - 1);
+            top = options.header + options.gap * row + height * (row - 1);
+            common_options = tools.struct2parameter(common_options);
+            obj.add_plot_position(f, left, top, width, height, common_options{:});
+
+        end
         
+        function add_text(obj, text, left, top, options, NamedArg)
+            arguments
+                obj 
+                text 
+                left = []
+                top = []
+                options.bold = false
+                options.italic = false
+                options.underline = false
+                options.shadow = false
+                options.fontname
+                options.fontsize
+                NamedArg.left
+                NamedArg.top
+            end
+            if isempty(left)
+                left = NamedArg.left;
+            end
+            if isempty(top)
+                top = NamedArg.top;
+            end
+            textbox = obj.slide.Shapes.AddTextbox('msoTextOrientationHorizontal', left, top, 1, 1);
+            textbox.TextFrame.TextRange.Text = text;
+            textbox.TextFrame.TextRange.Font.Bold = options.bold;
+            textbox.TextFrame.TextRange.Font.Italic = options.italic;
+            textbox.TextFrame.TextRange.Font.Underline = options.underline;
+            textbox.TextFrame.TextRange.Font.Shadow = options.shadow;
+            if isfield(options, 'fontsize')
+                textbox.TextFrame.TextRange.Font.Size = options.fontsize;
+            end
+            if isfield(options, 'fontname')
+                textbox.TextFrame.TextRange.Font.Name = options.fontname;
+            end
+        end
+
         function close(obj)
             Quit(obj.h)
             delete(obj.h)
