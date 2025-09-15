@@ -1,5 +1,5 @@
 classdef plot_pptx < handle
-    
+
     properties
         h
         pages
@@ -11,7 +11,7 @@ classdef plot_pptx < handle
         gap = 30
         header = 45
     end
-    
+
     methods
         function obj = plot_pptx(name)
             if nargin < 1
@@ -28,15 +28,15 @@ classdef plot_pptx < handle
             obj.blankSlide = obj.myPres.SlideMaster.CustomLayouts.Item(2);
             obj.add_page();
         end
-        
+
         function add_page(obj, name)
             obj.pages = obj.pages + 1;
             obj.slide = obj.myPres.Slides.AddSlide(obj.pages, obj.blankSlide);
             if nargin > 1
-               obj.slide.Shapes.Title.TextFrame.TextRange.Text = name;
+                obj.slide.Shapes.Title.TextFrame.TextRange.Text = name;
             end
         end
-        
+
         function add_plot(obj, f, row, col, row_all, col_all, retry, isequal)
             if nargin < 7 || isempty(retry)
                 retry = 0;
@@ -48,30 +48,30 @@ classdef plot_pptx < handle
                 return
             end
             try
-            % width = [0 960], height = [45, 540-35]
-            
-            width = (obj.width-30*(col_all+1))/col_all;
-            height = (460-30*(row_all+1))/row_all;
-            
-            figure(f), grid on, box on
-            try
-                set(f.Children, 'FontSize', 10);
-                set(f.Children, 'FontName', 'Times New Roman');
+                % width = [0 960], height = [45, 540-35]
+
+                width = (obj.width-30*(col_all+1))/col_all;
+                height = (460-30*(row_all+1))/row_all;
+
+                figure(f), grid on, box on
+                try
+                    set(f.Children, 'FontSize', 10);
+                    set(f.Children, 'FontName', 'Times New Roman');
+                catch
+                end
+                set(f, 'Position', [100, 100, width, height])
+                if isequal
+                    axis('equal')
+                end
+                drawnow
+                pause(1)
+                copygraphics(f, 'ContentType', 'vector', 'BackgroundColor', 'none')
+                Image = obj.slide.Shapes.Paste;
+                set(Image, 'Left', 30*col+width*(col-1));
+                set(Image, 'Top', 45+30*row+height*(row-1));
+                set(Image, 'Width', width);
             catch
-            end
-            set(f, 'Position', [100, 100, width, height])
-            if isequal
-            axis('equal')
-            end
-            drawnow
-            pause(1)
-            copygraphics(f, 'ContentType', 'vector', 'BackgroundColor', 'none')
-            Image = obj.slide.Shapes.Paste;
-            set(Image, 'Left', 30*col+width*(col-1));
-            set(Image, 'Top', 45+30*row+height*(row-1));
-            set(Image, 'Width', width);
-            catch
-               obj.add_plot(f, row, col, row_all, col_all, retry+1) 
+                obj.add_plot(f, row, col, row_all, col_all, retry+1)
             end
         end
 
@@ -86,28 +86,28 @@ classdef plot_pptx < handle
                 return
             end
             try
-            % width = [0 960], height = [45, 540-35]
-            
-            width = (obj.width-30*(col_all+1))/col_all;
-            height = (460-30*(row_all+1))/row_all;
-            
-            figure(f), grid on, box on
-            try
-                set(f.Children, 'FontSize', 10);
-                set(f.Children, 'FontName', 'Times New Roman');
+                % width = [0 960], height = [45, 540-35]
+
+                width = (obj.width-30*(col_all+1))/col_all;
+                height = (460-30*(row_all+1))/row_all;
+
+                figure(f), grid on, box on
+                try
+                    set(f.Children, 'FontSize', 10);
+                    set(f.Children, 'FontName', 'Times New Roman');
+                catch
+                end
+                set(f, 'Position', [100, 100, width, height])
+                if isequal
+                    axis('equal')
+                end
+                copygraphics(f, 'ContentType', 'image', 'BackgroundColor', 'none')
+                Image = obj.slide.Shapes.Paste;
+                set(Image, 'Left', 30*col+width*(col-1));
+                set(Image, 'Top', 45+30*row+height*(row-1));
+                set(Image, 'Width', width);
             catch
-            end
-            set(f, 'Position', [100, 100, width, height])
-            if isequal
-            axis('equal')
-            end
-            copygraphics(f, 'ContentType', 'image', 'BackgroundColor', 'none')
-            Image = obj.slide.Shapes.Paste;
-            set(Image, 'Left', 30*col+width*(col-1));
-            set(Image, 'Top', 45+30*row+height*(row-1));
-            set(Image, 'Width', width);
-            catch
-               obj.add_plot(f, row, col, row_all, col_all, retry+1) 
+                obj.add_plot(f, row, col, row_all, col_all, retry+1)
             end
         end
 
@@ -195,13 +195,23 @@ classdef plot_pptx < handle
             if isempty(height)
                 height = NamedArgs.height;
             end
-            tmpfile = tempname(pwd);
+            tmpfile = tempname(tempdir);
             if strcmpi(options.type, 'vector')
                 tmpfile = strcat(tmpfile, '.emf');
-                exportgraphics(f, tmpfile, ContentType="vector", BackgroundColor="none", Width=width, Height=height);
+                try
+                    exportgraphics(f, tmpfile, ContentType="vector", BackgroundColor="none", Width=width, Height=height);
+                catch
+                    set(f, 'Position', [100, 100, width, height])
+                    exportgraphics(f, tmpfile, ContentType="vector", BackgroundColor="none");
+                end
             else
                 tmpfile = strcat(tmpfile, '.png');
-                exportgraphics(f, tmpfile, ContentType="image", BackgroundColor="none", Width=width, Height=height, Units="points", Resolution=options.resolution);
+                try
+                    exportgraphics(f, tmpfile, ContentType="image", BackgroundColor="none", Width=width, Height=height, Units="points", Resolution=options.resolution);
+                catch
+                    set(f, 'Position', [100, 100, width, height])
+                    exportgraphics(f, tmpfile, ContentType="image", BackgroundColor="none", Resolution=options.resolution);
+                end
             end
 
             obj.slide.Shapes.AddPicture(tmpfile, 'msoFalse', 'msoCTrue', left, top, width, height);
@@ -235,21 +245,65 @@ classdef plot_pptx < handle
             obj.add_plot_position(f, left, top, width, height, common_options{:});
 
         end
-        
-        function add_text(obj, text, left, top, options, NamedArg)
+
+        function align_figs(obj)
+            rows = 1;
+            columns = 1;
+            % すべてのfigureのハンドルを取得
+            allFigures = findall(0, 'Type', 'figure');
+            numbers = {allFigures.Number};
+            idx = tools.vcellfun(@(c) ~isempty(c), numbers);
+            allFigures = allFigures(idx);
+            numbers = vertcat(numbers{idx});
+            [~, i] = sort(numbers);
+            allFigures = allFigures(i);
+            % figureの数
+            numFigures = numel(allFigures);
+            % 行数と列数の積がfigureの数より大きい場合、行数と列数を調整
+            while rows * columns < numFigures
+                if rows < columns
+                    rows = rows + 1;
+                else
+                    columns = columns + 1;
+                end
+            end
+
+            k = 1;
+            for i = 1:rows
+                for j = 1:columns
+                    fig = allFigures(k);
+                    obj.add_plot_tile(fig, i, j, rows, columns);
+                    k = k + 1;
+                    if k > numFigures
+                        tools.figs2front;
+                        return;
+                    end
+                end
+            end
+
+        end
+
+
+        function add_text(obj, text, left, top, width, height, options, NamedArg)
             arguments
-                obj 
-                text 
+                obj
+                text
                 left = []
                 top = []
+                width = []
+                height = []
                 options.bold = false
                 options.italic = false
                 options.underline = false
                 options.shadow = false
                 options.fontname
                 options.fontsize
+                options.autosize = true
+                options.wordwrap = false
                 NamedArg.left
                 NamedArg.top
+                NamedArg.width = 1
+                NamedArg.height = 1
             end
             if isempty(left)
                 left = NamedArg.left;
@@ -257,7 +311,23 @@ classdef plot_pptx < handle
             if isempty(top)
                 top = NamedArg.top;
             end
-            textbox = obj.slide.Shapes.AddTextbox('msoTextOrientationHorizontal', left, top, 1, 1);
+            if isempty(width)
+                width = NamedArg.width;
+            end
+            if isempty(height)
+                height = NamedArg.height;
+            end
+            textbox = obj.slide.Shapes.AddTextbox('msoTextOrientationHorizontal', left, top, width, height);
+            if options.autosize
+                textbox.TextFrame.AutoSize = 'ppAutoSizeShapeToFitText';
+            else
+                textbox.TextFrame.AutoSize = 'ppAutoSizeNone';
+            end
+            if options.wordwrap
+                textbox.TextFrame.WordWrap = 'msoTrue';
+            else
+                textbox.TextFrame.WordWrap = 'msoFalse';
+            end
             textbox.TextFrame.TextRange.Text = text;
             textbox.TextFrame.TextRange.Font.Bold = options.bold;
             textbox.TextFrame.TextRange.Font.Italic = options.italic;
@@ -275,10 +345,10 @@ classdef plot_pptx < handle
             Quit(obj.h)
             delete(obj.h)
         end
-        
+
         function saveas(obj, name)
-           obj.myPres.SaveAs(name); 
+            obj.myPres.SaveAs(name);
         end
     end
-    
+
 end
